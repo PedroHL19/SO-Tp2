@@ -27,7 +27,7 @@ public class Calculations {
             pages.add(new Page(i));
         }
     }
-    
+
     private void calculateResults() {
         int optimal = optimal();
         int nru = nru();
@@ -213,64 +213,59 @@ public class Calculations {
     }
 
 
-
     private int nru() {
         resetState();
         int pageFaults = 0;
-        
+        int lastResetTime = 0;
+
         for (Configuration access : accessSequence) {
-            // Reset reference bits at clock intervals
-            if (access.getAccessTime() > 0 && access.getAccessTime() % config.getClockInterval() == 0) {
+            if (access.getAccessTime() - lastResetTime >= config.getClockInterval()) {
                 for (Page p : pages) {
                     if (p.isPresent()) {
                         p.setReferenced(false);
                     }
                 }
+                lastResetTime = access.getAccessTime();
             }
 
-            Page currentPage = pages.get(access.getPageNumber());
-
-            if (!currentPage.isPresent()) {
+            Page page = pages.get(access.getPageNumber());
+            if (!page.isPresent()) {
                 pageFaults++;
-
                 if (frames.size() < config.getTotalFrames()) {
-                    frames.add(currentPage);
-                    currentPage.setPresent(true);
+                    frames.add(page);
+                    page.setPresent(true);
                 } else {
-                    // Classify pages into classes
-                    ArrayList<ArrayList<Page>> classes = new ArrayList<>();
-                    for (int i = 0; i < 4; i++) {
-                        classes.add(new ArrayList<>());
-                    }
-
-                    for (Page page : frames) {
-                        int classIndex = (page.isReferenced() ? 2 : 0) + (page.isModified() ? 1 : 0);
-                        classes.get(classIndex).add(page);
-                    }
-
-                    // Find victim from lowest non-empty class
                     Page victim = null;
-                    for (ArrayList<Page> classPages : classes) {
-                        if (!classPages.isEmpty()) {
-                            victim = classPages.get(0);
+                    int lowestClass = 4;
+                    
+                    for (Page p : frames) {
+                        int pageClass = getPageClass(p);
+                        if (pageClass < lowestClass) {
+                            lowestClass = pageClass;
+                        }
+                    }
+                    
+                    for (Page p : frames) {
+                        if (getPageClass(p) == lowestClass) {
+                            victim = p;
                             break;
                         }
                     }
-
+                    
                     frames.remove(victim);
                     victim.setPresent(false);
-                    frames.add(currentPage);
-                    currentPage.setPresent(true);
+                    frames.add(page);
+                    page.setPresent(true);
                 }
             }
-
-            // Update page status
-            currentPage.setReferenced(true);
-            if (access.isWrite()) {
-                currentPage.setModified(true);
-            }
+            
+            updatePageStatus(page, access.isWrite());
         }
-
         return pageFaults;
     }
+
+    private int getPageClass(Page page) {
+        return (page.isReferenced() ? 2 : 0) + (page.isModified() ? 1 : 0);
+    }
+
 }

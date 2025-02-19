@@ -1,9 +1,9 @@
 public class Page {
     private int pageNumber;
-    private boolean referenced;  // Bit R
-    private boolean modified;    // Bit M (dirty)
-    private int lastAccess;     // Tempo do último acesso
-    private boolean present;     // Se está na memória
+    private boolean referenced;
+    private boolean modified;   
+    private int lastAccess;     
+    private boolean present;     
 
     public Page(int pageNumber) {
         this.pageNumber = pageNumber;
