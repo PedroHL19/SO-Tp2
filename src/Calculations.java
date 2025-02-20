@@ -212,65 +212,62 @@ public class Calculations {
         return pageFaults;
     }
 
-
-
     private int nru() {
         resetState();
         int pageFaults = 0;
-        
+        int resetCycles = config.getClockInterval();
+        int currentTime = 0;
+
         for (Configuration access : accessSequence) {
-            // Reset reference bits at clock intervals
-            if (access.getAccessTime() > 0 && access.getAccessTime() % config.getClockInterval() == 0) {
-                for (Page p : pages) {
-                    if (p.isPresent()) {
-                        p.setReferenced(false);
-                    }
-                }
-            }
+            Page page = pages.get(access.getPageNumber());
+            currentTime = access.getAccessTime();
 
-            Page currentPage = pages.get(access.getPageNumber());
-
-            if (!currentPage.isPresent()) {
+            if (!page.isPresent()) {
                 pageFaults++;
-
                 if (frames.size() < config.getTotalFrames()) {
-                    frames.add(currentPage);
-                    currentPage.setPresent(true);
+                    frames.add(page);
+                    page.setPresent(true);
+                    updatePageStatus(page, access.isWrite());
                 } else {
-                    // Classify pages into classes
-                    ArrayList<ArrayList<Page>> classes = new ArrayList<>();
+                    // Classify pages into NRU categories
+                    List<Page>[] classes = new ArrayList[4];
                     for (int i = 0; i < 4; i++) {
-                        classes.add(new ArrayList<>());
+                        classes[i] = new ArrayList<>();
                     }
 
-                    for (Page page : frames) {
-                        int classIndex = (page.isReferenced() ? 2 : 0) + (page.isModified() ? 1 : 0);
-                        classes.get(classIndex).add(page);
+                    for (Page frame : frames) {
+                        int classNum = (frame.isReferenced() ? 2 : 0) + 
+                                      (frame.isModified() ? 1 : 0);
+                        classes[classNum].add(frame);
                     }
 
-                    // Find victim from lowest non-empty class
+                    // Find first non-empty class
                     Page victim = null;
-                    for (ArrayList<Page> classPages : classes) {
-                        if (!classPages.isEmpty()) {
-                            victim = classPages.get(0);
+                    for (List<Page> cls : classes) {
+                        if (!cls.isEmpty()) {
+                            victim = cls.get(0);
                             break;
                         }
                     }
 
+                    // Replace victim
                     frames.remove(victim);
                     victim.setPresent(false);
-                    frames.add(currentPage);
-                    currentPage.setPresent(true);
+                    frames.add(page);
+                    page.setPresent(true);
+                    updatePageStatus(page, access.isWrite());
+                }
+            } else {
+                updatePageStatus(page, access.isWrite());
+            }
+
+            // Reset referenced bits periodically
+            if (resetCycles > 0 && currentTime % resetCycles == 0) {
+                for (Page frame : frames) {
+                    frame.setReferenced(false);
                 }
             }
-
-            // Update page status
-            currentPage.setReferenced(true);
-            if (access.isWrite()) {
-                currentPage.setModified(true);
-            }
         }
-
         return pageFaults;
     }
-}
+} 

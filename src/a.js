@@ -80,7 +80,7 @@ function nru(input) {
 
 try {
   const input = fs.readFileSync('a.txt', 'utf8');
-  nru(input);
+  console.log(nru(input));
 } catch (err) {
   console.error('Error reading file:', err);
 }
