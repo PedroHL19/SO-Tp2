@@ -23,26 +23,26 @@ public class Calculations {
 
     private void initializePages() {
         pages.clear();
-        for (int i = 0; i < config.getTotalPages(); i++) {
+        for (long i = 0; i < config.getTotalPages(); i++) {  
             pages.add(new Page(i));
         }
     }
     
     private void calculateResults() {
-        int optimal = optimal();
-        int nru = nru();
-        int clock = clock();
-        int wsclock = wsclock();
+        long optimal = optimal();    
+        long nru = nru();           
+        long clock = clock();       
+        long wsclock = wsclock();   
 
         answer = optimal + "\n" + nru + "\n" + clock + "\n" + wsclock;
     }
 
-    private int optimal() {
+    private long optimal() {  
         resetState();
-        int pageFaults = 0;
+        long pageFaults = 0;  
         for (int i = 0; i < accessSequence.size(); i++) {
             Configuration access = accessSequence.get(i);
-            Page page = pages.get(access.getPageNumber());
+            Page page = pages.get((int)access.getPageNumber());  
 
             if (!page.isPresent()) {
                 pageFaults++;
@@ -62,10 +62,10 @@ public class Calculations {
     }
 
     private Page findOptimalVictim(int currentIndex) {
-        int farthestUse = -1;
+        long farthestUse = -1;  
         Page victim = null;
         for (Page frame : frames) {
-            int nextUse = findNextUse(frame.getPageNumber(), currentIndex + 1);
+            long nextUse = findNextUse(frame.getPageNumber(), currentIndex + 1);  
             if (nextUse == -1)
                 return frame;
             if (nextUse > farthestUse) {
@@ -93,7 +93,7 @@ public class Calculations {
         }
     }
 
-    private int findNextUse(int pageNumber, int startIndex) {
+    private long findNextUse(long pageNumber, int startIndex) { 
         for (int i = startIndex; i < accessSequence.size(); i++) {
             if (accessSequence.get(i).getPageNumber() == pageNumber) {
                 return i;
@@ -108,13 +108,13 @@ public class Calculations {
         writer.flush();
     }
 
-    private int clock() {
+    private long clock() {  
         resetState();
-        int pageFaults = 0;
+        long pageFaults = 0; 
         int clockHand = 0;
 
         for (Configuration access : accessSequence) {
-            Page page = pages.get(access.getPageNumber());
+            Page page = pages.get((int)access.getPageNumber());  
 
             if (!page.isPresent()) {
                 pageFaults++;
@@ -132,7 +132,7 @@ public class Calculations {
                             break;
                         }
                         framePage.setReferenced(false);
-                        clockHand = (clockHand + 1) % config.getTotalFrames();
+                        clockHand = (clockHand + 1) % (int)config.getTotalFrames();  
                     }
                 }
             }
@@ -143,14 +143,13 @@ public class Calculations {
         return pageFaults;
     }
 
-    private int wsclock() {
+    private long wsclock() {  
         resetState();
-        int pageFaults = 0;
+        long pageFaults = 0;  
         int clockHand = 0;
-        int tau = config.getClockInterval();
-
+        long tau = config.getClockInterval();  
         for (Configuration access : accessSequence) {
-            Page page = pages.get(access.getPageNumber());
+            Page page = pages.get((int)access.getPageNumber());  
             
             if (!page.isPresent()) {
                 pageFaults++;
@@ -163,7 +162,7 @@ public class Calculations {
                     
                     do {
                         Page current = frames.get(clockHand);
-                        int age = access.getAccessTime() - current.getLastAccess();
+                        long age = access.getAccessTime() - current.getLastAccess();
                         
                         if (age > tau) {
                             if (!current.isReferenced() || !current.isModified()) {
@@ -212,14 +211,14 @@ public class Calculations {
         return pageFaults;
     }
 
-    private int nru() {
+    private long nru() {  
         resetState();
-        int pageFaults = 0;
-        int resetCycles = config.getClockInterval();
-        int currentTime = 0;
+        long pageFaults = 0;  
+        long resetCycles = config.getClockInterval();  
+        long currentTime = 0;  
 
         for (Configuration access : accessSequence) {
-            Page page = pages.get(access.getPageNumber());
+            Page page = pages.get((int)access.getPageNumber());  
             currentTime = access.getAccessTime();
 
             if (!page.isPresent()) {
@@ -229,19 +228,17 @@ public class Calculations {
                     page.setPresent(true);
                     updatePageStatus(page, access.isWrite());
                 } else {
-                    // Classify pages into NRU categories
+                    
                     List<Page>[] classes = new ArrayList[4];
                     for (int i = 0; i < 4; i++) {
                         classes[i] = new ArrayList<>();
                     }
 
                     for (Page frame : frames) {
-                        int classNum = (frame.isReferenced() ? 2 : 0) + 
-                                      (frame.isModified() ? 1 : 0);
+                        int classNum = (frame.isReferenced() ? 2 : 0) + (frame.isModified() ? 1 : 0);
                         classes[classNum].add(frame);
                     }
 
-                    // Find first non-empty class
                     Page victim = null;
                     for (List<Page> cls : classes) {
                         if (!cls.isEmpty()) {
@@ -250,7 +247,7 @@ public class Calculations {
                         }
                     }
 
-                    // Replace victim
+
                     frames.remove(victim);
                     victim.setPresent(false);
                     frames.add(page);
@@ -261,7 +258,6 @@ public class Calculations {
                 updatePageStatus(page, access.isWrite());
             }
 
-            // Reset referenced bits periodically
             if (resetCycles > 0 && currentTime % resetCycles == 0) {
                 for (Page frame : frames) {
                     frame.setReferenced(false);
@@ -270,4 +266,4 @@ public class Calculations {
         }
         return pageFaults;
     }
-} 
+}

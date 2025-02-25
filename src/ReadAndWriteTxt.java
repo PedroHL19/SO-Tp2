@@ -36,15 +36,15 @@ public class ReadAndWriteTxt {
         String[] parts = line.trim().split("\\s+");
         
         if (lineNum == 1) {
-            config.setTotalPages(Integer.parseInt(parts[0]));
+            config.setTotalPages(Long.parseLong(parts[0])); 
         } else if (lineNum == 2) {
-            config.setTotalFrames(Integer.parseInt(parts[0]));
+            config.setTotalFrames(Long.parseLong(parts[0])); 
         } else if (lineNum == 3) {
-            config.setClockInterval(Integer.parseInt(parts[0]));
+            config.setClockInterval(Long.parseLong(parts[0])); 
         } else {
             Configuration access = new Configuration();
-            access.setPageNumber(Integer.parseInt(parts[0]));
-            access.setAccessTime(Integer.parseInt(parts[1]));
+            access.setPageNumber(Long.parseLong(parts[0])); 
+            access.setAccessTime(Long.parseLong(parts[1])); 
             access.setWrite(parts[2].equals("W"));
             accessSequence.add(access);
         }

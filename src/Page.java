@@ -1,11 +1,11 @@
 public class Page {
-    private int pageNumber;
+    private long pageNumber;     
     private boolean referenced;
     private boolean modified;   
-    private int lastAccess;     
+    private long lastAccess;      
     private boolean present;     
 
-    public Page(int pageNumber) {
+    public Page(long pageNumber) {  
         this.pageNumber = pageNumber;
         this.referenced = false;
         this.modified = false;
@@ -13,7 +13,7 @@ public class Page {
         this.present = false;
     }
 
-    public int getPageNumber() {
+    public long getPageNumber() {  
         return pageNumber;
     }
 
@@ -33,11 +33,11 @@ public class Page {
         this.modified = modified;
     }
 
-    public int getLastAccess() {
+    public long getLastAccess() {  
         return lastAccess;
     }
 
-    public void setLastAccess(int time) {
+    public void setLastAccess(long time) {  
         this.lastAccess = time;
     }
 
